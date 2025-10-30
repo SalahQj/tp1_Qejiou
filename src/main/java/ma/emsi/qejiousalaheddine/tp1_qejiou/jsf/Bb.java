@@ -7,6 +7,11 @@ import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
+// ==== AJOUT DES IMPORTS NÉCESSAIRES ====
+import ma.emsi.qejiousalaheddine.tp1_qejiou.llm.JsonUtilPourGemini;
+import ma.emsi.qejiousalaheddine.tp1_qejiou.llm.LlmInteraction;
+// =======================================
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -59,6 +64,17 @@ public class Bb implements Serializable {
     @Inject
     private FacesContext facesContext;
 
+    // ==== AJOUT DE L'INJECTION DU SERVICE JSON ====
+    @Inject
+    private JsonUtilPourGemini jsonUtil;
+    // ==============================================
+
+    // ==== AJOUT DES VARIABLES POUR LE DEBUG ====
+    private boolean debug = false;
+    private String texteRequeteJson;
+    private String texteReponseJson;
+    // ===========================================
+
     /**
      * Obligatoire pour un bean CDI (classe gérée par CDI), s'il y a un autre constructeur.
      */
@@ -108,7 +124,7 @@ public class Bb implements Serializable {
 
     /**
      * Envoie la question au serveur.
-     * REMPLACÉ PAR LE CODE DU BONUS (INVERSION DE LA QUESTION)
+     * CE CODE EST MAINTENANT MODIFIÉ POUR LE TP1.
      *
      * @return null pour rester sur la même page.
      */
@@ -121,24 +137,40 @@ public class Bb implements Serializable {
             return null;
         }
 
-        // --- DÉBUT DE MON TRAITEMENT PERSONNEL (BONUS) ---
+        // --- DÉBUT DE LA NOUVELLE LOGIQUE TP1 ---
+        try {
+            // Si c'est le premier message, on envoie le rôle système et on verrouille la liste
+            if (this.isRoleSystemeChangeable()) {
+                jsonUtil.setSystemRole(this.roleSysteme);
+                this.roleSystemeChangeable = false; // Verrouille la liste déroulante
+            }
 
-        // 1. Utiliser un StringBuilder pour inverser la chaîne
-        String questionInversee = new StringBuilder(question).reverse().toString();
+            // Appelle le service qui appelle l'API
+            LlmInteraction interaction = jsonUtil.envoyerRequete(question);
 
-        // 2. Construire la nouvelle réponse
-        this.reponse = "Voici votre question, mais à l'envers :\n" + questionInversee;
+            // Met à jour la réponse et les champs de debug
+            this.reponse = interaction.reponseExtraite();
+            this.texteRequeteJson = interaction.questionJson();
+            this.texteReponseJson = interaction.reponseJson();
 
-        // 3. Gérer le rôle système (important de garder cette partie)
-        if (this.conversation.isEmpty()) {
-            // Invalide le bouton pour changer le rôle système
-            this.roleSystemeChangeable = false;
+        } catch (Exception e) {
+            // En cas d'erreur (ex: clé API incorrecte, pas de réseau)
+            FacesMessage message =
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                            "Problème de connexion avec l'API du LLM",
+                            "Problème de connexion avec l'API du LLM: " + e.getMessage());
+            facesContext.addMessage(null, message);
+            return null; // Arrête le traitement en cas d'erreur
         }
+        // --- FIN DE LA NOUVELLE LOGIQUE TP1 ---
 
-        // --- FIN DE MON TRAITEMENT PERSONNEL ---
 
         // La conversation contient l'historique des questions-réponses depuis le début.
         afficherConversation();
+
+        // C'est une bonne pratique de vider le champ question après l'envoi
+        this.question = "";
+
         return null;
     }
 
@@ -193,4 +225,37 @@ public class Bb implements Serializable {
         return this.listeRolesSysteme;
     }
 
+    // ==== AJOUT DES MÉTHODES POUR LE DEBUG ====
+
+    /**
+     * Appelée par le bouton "Mode Debug" pour inverser la valeur du booléen.
+     */
+    public void toggleDebug() {
+        this.setDebug(!isDebug());
+    }
+
+    public boolean isDebug() {
+        return debug;
+    }
+
+    public void setDebug(boolean debug) {
+        this.debug = debug;
+    }
+
+    public String getTexteRequeteJson() {
+        return texteRequeteJson;
+    }
+
+    public void setTexteRequeteJson(String texteRequeteJson) {
+        this.texteRequeteJson = texteRequeteJson;
+    }
+
+    public String getTexteReponseJson() {
+        return texteReponseJson;
+    }
+
+    public void setTexteReponseJson(String texteReponseJson) {
+        this.texteReponseJson = texteReponseJson;
+    }
+    // =========================================
 }
