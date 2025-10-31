@@ -1,4 +1,4 @@
-package ma.emsi.qejiousalaheddine.tp1_qejiou.llm;
+package ma.emsi.qejiousalaheddine.tp1_qejiou.llm; // <-- VÉRIFIEZ VOTRE PACKAGE
 
 import jakarta.enterprise.context.Dependent;
 import jakarta.ws.rs.client.*;
@@ -21,22 +21,25 @@ public class LlmClientPourGemini implements Serializable {
     private final WebTarget target;
 
     public LlmClientPourGemini() {
-        // Récupère la clé secrète pour travailler avec l'API du LLM, mise dans une variable d'environnement
-        // du système d'exploitation.
+        // 1. Récupère la clé
         this.key = System.getenv("GEMINI_KEY");
 
-        // Vérification simple si la clé n'est pas trouvée
+        // 2. Vérifie la clé
         if (this.key == null || this.key.isBlank()) {
             throw new RuntimeException("La variable d'environnement GEMINI_KEY n'est pas définie !");
         }
 
-        // Client REST pour envoyer des requêtes vers les endpoints de l'API du LLM
+        // 3. Crée le client REST et l'assigne AU CHAMP DE LA CLASSE (this.clientRest)
         this.clientRest = ClientBuilder.newClient();
 
-        // Endpoint REST pour envoyer la question à l'API.
-        // C'est l'URL de l'API Gemini (v1beta) pour le modèle gemini-pro,
-        // avec la clé API passée en paramètre d'URL.
-        this.target = clientRest.target("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" + this.key);
+        // 4. Crée l'URL cible (avec le modèle 'gemini-2.5-flash' qui marche pour vous)
+        String apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + this.key;
+
+        // 5. Prépare la cible en utilisant le client de la classe (this.clientRest)
+        this.target = this.clientRest.target(apiUrl);
+
+        // 6. Ligne de débogage pour voir l'URL dans la console
+        System.out.println("URL CIBLE DE L'API (Corrigée): " + this.target.getUri().toString());
     }
 
     /**
@@ -50,7 +53,13 @@ public class LlmClientPourGemini implements Serializable {
         return request.post(requestEntity);
     }
 
+    /**
+     * Ferme le client REST.
+     */
     public void closeClient() {
-        this.clientRest.close();
+        // Ajout d'une vérification pour éviter une NullPointerException
+        if (this.clientRest != null) {
+            this.clientRest.close();
+        }
     }
 }
