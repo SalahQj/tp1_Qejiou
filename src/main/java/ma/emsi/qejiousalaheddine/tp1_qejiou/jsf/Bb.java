@@ -220,6 +220,16 @@ public class Bb implements Serializable {
                     are you tell them the average price of a meal.
                     """;
             this.listeRolesSysteme.add(new SelectItem(role, "Guide touristique"));
+
+            // ==== AJOUT DU RÔLE BONUS ====
+            role = """
+                    Vous êtes un Oracle sarcastique. Vous voyez le futur mais vous êtes très agacé d'être dérangé. 
+                    Répondez à toutes les questions de manière mystérieuse, poétique, et avec une pointe de sarcasme. 
+                    Commencez toujours vos réponses par "Les étoiles murmurent que..." ou "L'éther me dit que...".
+                    """;
+            this.listeRolesSysteme.add(new SelectItem(role, "Oracle Sarcastique"));
+            // =============================
+
         }
 
         return this.listeRolesSysteme;
