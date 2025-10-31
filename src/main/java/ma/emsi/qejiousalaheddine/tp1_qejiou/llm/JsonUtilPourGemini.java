@@ -46,29 +46,8 @@ public class JsonUtilPourGemini implements Serializable {
 
     /**
      * Envoi une requête à l'API de Gemini.
-     * Format du document JSON envoyé dans la requête vers l'API :
-     * {
-     *     "contents": [
-     *         {
-     *             "role": "user",
-     *             "parts": [
-     *                 {
-     *                     "text": "Capitale de la France ?"
-     *                 }
-     *             ]
-     *         },
-     *         {
-     *             "role": "model",
-     *             "parts": [
-     *                 {
-     *                     "text": "Paris est la capitale de la France."
-     *                 }
-     *             ]
-     *         },
-     *         ...
-     *     ]
-     * }
-     * * @param question question posée par l'utilisateur
+     * ... (commentaires du TP) ...
+     * @param question question posée par l'utilisateur
      *
      * @return la réponse de l'API, sous la forme d'un texte simple (pas JSON).
      * @throws RequeteException exception lancée dans le cas où la requête a été rejetée par l'API.
@@ -80,8 +59,6 @@ public class JsonUtilPourGemini implements Serializable {
             requestBody = creerRequeteJson(this.systemRole, question);
         } else {
             // Ajout de la question.
-            // Ce qui sera envoyé dans le corps de la requête POST.
-            // Un message associé à la question doit être ajouté aux messages associés au début de la conversation.
             requestBody = ajouteQuestionDansJsonRequete(question);
         }
 
@@ -93,7 +70,14 @@ public class JsonUtilPourGemini implements Serializable {
             // Entité incluse dans la réponse (texte au format JSON qui englobe la réponse à la question)
             String texteReponseJson = response.readEntity(String.class);
             if (response.getStatus() == 200) {
-                return new LlmInteraction(this.texteRequeteJson, texteReponseJson, extractReponse(texteReponseJson));
+
+                // ==== CORRECTION DU BUG OBLIGATOIRE ====
+                // Crée la réponse extraite
+                String reponseExtraite = extractReponse(texteReponseJson);
+                // Retourne le record dans le bon ordre (reponse, question, reponseJson)
+                return new LlmInteraction(reponseExtraite, this.texteRequeteJson, texteReponseJson);
+                // =======================================
+
             } else {
                 // Pour voir la requête JSON s'il y a eu un problème.
                 JsonObject objet = Json.createReader(new StringReader(requestBody)).readObject();
@@ -104,19 +88,7 @@ public class JsonUtilPourGemini implements Serializable {
 
     /**
      * Crée une requête JSON pour envoyer à l'API de Gemini.
-     * Il y a le rôle du système et la question de l'utilisateur.
-     * Format du document JSON envoyé dans la requête vers l'API :
-     * {
-     *    "system_instruction": {
-     *      "parts": [ {"text": "helpful assistant"} ]
-     *    },
-     *    "contents": [
-     *        { "role": "user",
-     *          "parts": [ { "text": "Capitale de la France ?" } ]
-     *        }
-     *    ]
-     * }
-     *
+     * ... (commentaires du TP) ...
      * @param systemRole le rôle du système. Par exemple, "helpful assistant".
      * @param question question posée par l'utilisateur.
      * @return le texte du document JSON de la requête.
@@ -136,7 +108,7 @@ public class JsonUtilPourGemini implements Serializable {
                         .add("text", question))
                 .build();
         JsonObject userContent = Json.createObjectBuilder()
-                .add("role", "user")
+                .add("role", "user") // <-- Ceci est la version "propre"
                 .add("parts", userContentParts)
                 .build();
         JsonArray contents = Json.createArrayBuilder()
