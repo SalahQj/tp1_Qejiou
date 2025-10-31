@@ -1,4 +1,4 @@
-package ma.emsi.qejiousalaheddine.tp1_qejiou.llm; // <-- VÉRIFIEZ VOTRE PACKAGE
+package ma.emsi.qejiousalaheddine.tp1_qejiou.llm;
 
 import jakarta.enterprise.context.Dependent;
 import jakarta.ws.rs.client.*;
